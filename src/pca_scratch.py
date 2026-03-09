@@ -13,7 +13,9 @@ class PCA:
         # Step 1: standardize
         self.mean = np.mean(X, axis=0)
         self.std = np.std(X, axis=0)
-        X_stand = (X - self.mean) / self.std
+
+        std_safe = np.where(self.std == 0, 1.0, self.std)
+        X_stand = (X - self.mean) / std_safe
 
         # Step 2: calculate the covariance matrix
         cov_matrix = np.cov(X_stand, rowvar=False)
@@ -33,5 +35,6 @@ class PCA:
         self.explained_variance_ratio_ = eigen_values / np.sum(eigen_values)
 
     def transform(self, X):
-        X_stand = (X - self.mean) / self.std
+        std_safe = np.where(self.std == 0, 1.0, self.std)
+        X_stand = (X - self.mean) / std_safe
         return np.dot(X_stand,self.components)
