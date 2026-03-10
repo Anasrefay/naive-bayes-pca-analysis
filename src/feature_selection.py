@@ -1,5 +1,4 @@
 from sklearn.feature_selection import SelectKBest, chi2
-import pandas as pd
 
 def categorical_features(X, y, k=5):
     selector = SelectKBest(score_func=chi2, k=k)
