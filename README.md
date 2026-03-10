@@ -84,7 +84,7 @@ While PCA technically requires continuous data, applying it to the encoded Mushr
 
 ## 5. How to Run
 
-1.  Ensure your data is placed in the `data/` folder as `mushrooms.csv` and `breast_cancer.csv`.
+1.  Ensure your data is placed in the `data/` folder as `mushrooms.csv` and `breastcancer.csv`.
 2.  Install dependencies: `pip install pandas numpy scikit-learn matplotlib`.
 3.  Run the master script:
     ```bash
