@@ -1,4 +1,3 @@
-import numpy as np
 from src.preprocessing import load_and_clean_data, preprocess_catdata, split_data
 from src.naive_bayes_scratch import NaiveBayesScratch
 from src.feature_selection import categorical_features
