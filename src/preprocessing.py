@@ -4,7 +4,12 @@ from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 
 def load_and_clean_data(filepath):
     df = pd.read_csv(filepath).replace('?', pd.NA)
-    return df.fillna(df.mode().iloc[0])
+    
+    df = df.fillna(df.mean(numeric_only=True))    
+    
+    df = df.fillna(df.mode().iloc[0])
+    
+    return df.dropna(axis=1)
 
 def preprocess_catdata(df, target):
     X_enc = OrdinalEncoder().fit_transform(df.drop(columns=[target]))

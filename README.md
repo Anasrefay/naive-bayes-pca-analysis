@@ -1,83 +1,92 @@
 # Machine Learning Pipeline: Naive Bayes, Feature Selection, and PCA
 
-This project implements a complete machine learning pipeline to compare the effects of **Feature Selection** and **From-Scratch Principal Component Analysis (PCA)** on Naive Bayes classification performance. The analysis is conducted across two distinct datasets: one primarily categorical and one primarily numerical.
+This project implements a complete, independent machine learning pipeline to compare the effects of **Feature Selection** and **From-Scratch Principal Component Analysis (PCA)** on classification performance. The system is designed to handle both categorical and numerical data types using scratch-built implementations of core algorithms.
 
 ---
 
 ## 1. Dataset Description
 
+To ensure full independence, all datasets are loaded from local CSV files rather than library-provided helpers.
+
 ### Dataset 1: Categorical (Mushroom Dataset)
-* **Source:** UCI Machine Learning Repository (`mushrooms.csv`).
-* **Size:** 8,124 instances.
-* **Features:** 22 categorical features (e.g., cap-shape, odor, gill-color).
-* **Class Distribution:** Edible (51.8%) and Poisonous (48.2%).
-* **Justification:** This dataset is 100% discrete, making it ideal for testing a **from-scratch Categorical Naive Bayes** and observing how PCA (a variance-based method) struggles with non-continuous data.
+* **Source:** `data/mushrooms.csv`
+* **Features:** 22 categorical attributes (e.g., cap-shape, odor, gill-color).
+* **Target:** `class` (Edible vs. Poisonous).
+* **Processing:** Handled by a custom **Categorical Naive Bayes** with Laplacian smoothing.
 
 ### Dataset 2: Numerical (Breast Cancer Wisconsin)
-* **Source:** `sklearn.datasets.load_breast_cancer`.
-* **Size:** 569 instances.
+* **Source:** `data/breastcancer.csv`
 * **Features:** 30 continuous numerical features (e.g., mean radius, texture, smoothness).
-* **Class Distribution:** Malignant (212) and Benign (357).
-* **Justification:** The features are all continuous real numbers, which is a prerequisite for a mathematically sound PCA implementation.
+* **Target:** `diagnosis` (Malignant vs. Benign).
+* **Processing:** Handled by a **Gaussian Naive Bayes** implementation.
 
 ---
 
 ## 2. Implementation Details
 
+### Robust Data Cleaning & Preprocessing
+The pipeline includes a "Universal Loader" in `src/preprocessing.py` that handles real-world data issues:
+* **Standardization:** Replaces missing indicators like `'?'` with `NaN`.
+* **Numerical Imputation:** Fills missing numerical values with the **Mean**.
+* **Categorical Imputation:** Fills missing categorical gaps with the **Mode**.
+* **Encoding:** Uses `OrdinalEncoder` for features and `LabelEncoder` for targets to prepare data for mathematical operations.
+
+
+
 ### PCA from Scratch
-The PCA algorithm was implemented using **NumPy** to ensure a deep understanding of dimensionality reduction. 
+The PCA algorithm was implemented using **NumPy** to perform dimensionality reduction via eigen-decomposition.
+
+**Mathematical Workflow:**
+1.  **Standardization:** Features are centered ($mean=0$) and scaled ($std=1$).
+2.  **Covariance Matrix:** Computed to identify feature correlations.
+3.  **Eigen-decomposition:** Solves $Av = \lambda v$ to find principal axes.
+4.  **Projection:** Projects the original $n$-dimensional data onto the top $k$ eigenvectors.
 
 
 
-**Key Mathematical Steps:**
-1.  **Standardization:** Features are scaled to have a mean of 0 and a standard deviation of 1. A **stability fix** was implemented to handle zero-variance features by replacing a $0$ standard deviation with $1.0$ to prevent division-by-zero errors.
-2.  **Covariance Matrix Calculation:** We compute the covariance matrix to identify how features correlate with one another.
-3.  **Eigen-decomposition:** Using `numpy.linalg.eigh`, we calculate the eigenvalues and eigenvectors of the covariance matrix:
-    $$Av = \lambda v$$
-4.  **Sorting and Selection:** Eigenvectors are sorted by their corresponding eigenvalues in descending order. We select the top $k$ eigenvectors to form our principal components.
-5.  **Projection:** The original data is projected onto the new $k$-dimensional subspace.
-
-### Naive Bayes (Scratch vs. Gaussian)
-* **Scratch Implementation:** For categorical data, a from-scratch Naive Bayes was built using Laplacian smoothing and frequency-based probability estimation.
-* **Gaussian Implementation:** For PCA-reduced data and numerical data, `GaussianNB` is utilized because PCA outputs continuous "latent" variables that require a normal distribution assumption.
-
-
+### Naive Bayes Variants
+* **NaiveBayesScratch:** A frequency-based model for discrete categorical data.
+* **GaussianNBScratch:** A probability density-based model used for numerical data and PCA-transformed latent variables.
 
 ---
 
-## 3. Results and Comparison
+## 3. Final Results & Performance
+
+The following results were achieved using a 20% test split and local data loading:
 
 ### Accuracy Summary Table
 
 | Experiment | Mushroom (Categorical) | Breast Cancer (Numerical) |
 | :--- | :--- | :--- |
-| **Baseline (All Features)** | ~99.41% | ~94.12% |
-| **Feature Selection (k=5)** | ~95.07% | ~91.23% |
-| **PCA (Best k)** | ~85.20% | ~96.49% |
+| **Baseline (All Features)** | 88.18% | 96.49% |
+| **Feature Selection (k=5)** | 85.11% | 96.49% |
+| **PCA (Best k)** | **92.74% (k=15)** | **97.37% (k=2, 5, 10)** |
 
-> **Note:** Actual percentages reflect results using `random_state=42`.
 
-### Visualizations
-The pipeline generates the following plots for analysis:
-* **Confusion Matrices:** Visualizing Type I and Type II errors for each experiment.
-* **Scree Plot:** Visualizing the proportion of variance explained by each principal component in the numerical dataset.
-
-* **Bar Charts:** A final comparison of accuracy across the Baseline, Feature Selection, and PCA methods.
 
 ---
 
 ## 4. Discussion & Analysis
 
-### How did Naive Bayes perform on categorical versus numerical data?
-Naive Bayes performed exceptionally well on categorical data because the counts-based probability estimation naturally fits discrete attributes. For numerical data, **GaussianNB** assumes a normal distribution, which yielded high accuracy but was more sensitive to feature correlations.
+### The Success of PCA on Numerical Data
+On the Breast Cancer dataset, PCA (k=2) outperformed the baseline (97.37% vs 96.49%). This demonstrates that by compressing 30 features into just 2 principal components, we removed "noise" and redundant correlations, allowing the Naive Bayes model to find a cleaner decision boundary.
 
-### Which approach achieved better results for each dataset? Why?
-* **Categorical:** Baseline and Feature Selection performed significantly better. PCA performed worse because categorical labels (1, 2, 3) do not have a linear relationship, meaning variance does not equal "information" in this context.
-* **Numerical:** PCA often achieved the best results with high $k$ values because it removed noise and redundancy (e.g., highly correlated features like radius and perimeter) while retaining the most significant variance.
 
-### What are the trade-offs between feature selection and feature reduction (PCA)?
-* **Feature Selection:** Maintains interpretability. You know exactly which physical features (like "odor") are driving the prediction.
-* **PCA:** Maximizes information retention in fewer dimensions but creates "latent" features that are abstract and difficult to explain to stakeholders.
 
-### Is PCA appropriate for categorical data?
-Technically, no. PCA is designed for continuous variables where "distance" and "variance" have physical meaning. In the Mushroom dataset, the difference between a "bell" shape and a "flat" shape is arbitrary. Treating these as continuous numbers introduces noise that degrades model performance.
+### Categorical Challenges
+While PCA technically requires continuous data, applying it to the encoded Mushroom dataset (k=15) actually boosted accuracy to 92.74%. This suggests that even in discrete spaces, capturing the directions of maximum variance can act as a powerful form of regularization for Naive Bayes.
+
+### Trade-offs
+* **Feature Selection:** Preserves **Interpretability**. It identified that 5 specific features provide nearly the same predictive power as 30 in the numerical set.
+* **PCA:** Maximizes **Accuracy**. It provides the highest performance but results in "latent features" that are mathematically optimal but physically unexplainable.
+
+---
+
+## 5. How to Run
+
+1.  Ensure your data is placed in the `data/` folder as `mushrooms.csv` and `breast_cancer.csv`.
+2.  Install dependencies: `pip install pandas numpy scikit-learn matplotlib`.
+3.  Run the master script:
+    ```bash
+    python main.py
+    ```
