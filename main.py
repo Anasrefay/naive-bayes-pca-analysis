@@ -21,12 +21,20 @@ def main():
     xt_sel, idx = select_top_features(xt_c, yt_c, k=5)
     res_cat['FS (k=5)'] = run_exp(NaiveBayesScratch(), xt_sel, xv_c[:, idx], yt_c, yv_c, "Cat FS")
 
+    pca_full_c = PCA(n_components=xt_c.shape[1])
+    pca_full_c.fit(xt_c)
+    plot_scree(pca_full_c)  # scree plot for categorical
+
     best_pca_c = 0
+    best_k_c = 0
     for k in [2, 5, 10, 15]:
         pca = PCA(n_components=k)
         pca.fit(xt_c)
         acc = run_exp(GaussianNBScratch(), pca.transform(xt_c), pca.transform(xv_c), yt_c, yv_c, f"Cat PCA k={k}")
-        best_pca_c = max(best_pca_c, acc)
+        if acc > best_pca_c:
+            best_pca_c = acc
+            best_k_c = k
+    print(f"Best PCA k for categorical: {best_k_c} with accuracy {best_pca_c:.4f}")
     res_cat['PCA Best'] = best_pca_c
     plot_accuracy_comparison(res_cat, "Mushroom Results")
 
@@ -41,14 +49,20 @@ def main():
     xt_n_sel, idx_n = select_top_features(xt_n, yt_n, k=5)
     res_num['FS (k=5)'] = run_exp(GaussianNBScratch(), xt_n_sel, xv_n[:, idx_n], yt_n, yv_n, "Num FS")
     
+    pca_full_n = PCA(n_components=xt_n.shape[1])
+    pca_full_n.fit(xt_n)
+    plot_scree(pca_full_n)  # scree plot for numerical
+
     best_pca_n = 0
+    best_k_n = 0
     for k in [2, 5, 10, 15]:
         pca = PCA(n_components=k)
         pca.fit(xt_n)
         acc = run_exp(GaussianNBScratch(), pca.transform(xt_n), pca.transform(xv_n), yt_n, yv_n, f"Num PCA k={k}")
         if acc > best_pca_n:
             best_pca_n = acc
-            if k == 15: plot_scree(pca)
+            best_k_n = k
+    print(f"Best PCA k for numerical: {best_k_n} with accuracy {best_pca_n:.4f}")
     res_num['PCA Best'] = best_pca_n
     plot_accuracy_comparison(res_num, "Cancer Results")
 
