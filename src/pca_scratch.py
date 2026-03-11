@@ -10,7 +10,7 @@ class PCA:
         self.explained_variance_ratio_ = None
     def fit(self, X):
 
-        # Step 1: standardize
+        # Step 1: standardize (calculate mean and std for each feature and standardize the data)
         self.mean = np.mean(X, axis=0)
         self.std = np.std(X, axis=0)
 
